@@ -1,0 +1,12 @@
+# @package _global_
+
+model_name: TogetherAIAPI
+
+module:
+  _target_: recipe.models.${model_name}
+  together_model_name: meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo
+  # 99.9% of responses are below 4k tokens;
+  # this avoids infinite generation loops in model responses
+  max_tokens: 4000
+  temperature: 0.8
+  seed: ${seed}

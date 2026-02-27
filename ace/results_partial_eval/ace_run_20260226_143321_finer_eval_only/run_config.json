@@ -1,0 +1,26 @@
+{
+  "task_name": "finer",
+  "mode": "eval_only",
+  "generator_model": "DeepSeek-V3.1",
+  "reflector_model": "DeepSeek-V3.1",
+  "curator_model": "DeepSeek-V3.1",
+  "config": {
+    "num_epochs": 1,
+    "max_num_rounds": 3,
+    "curator_frequency": 1,
+    "eval_steps": 100,
+    "online_eval_frequency": 15,
+    "save_steps": 50,
+    "playbook_token_budget": 80000,
+    "task_name": "finer",
+    "mode": "eval_only",
+    "json_mode": false,
+    "no_ground_truth": false,
+    "save_dir": "results_partial_eval",
+    "test_workers": 20,
+    "initial_playbook_path": "results/ace_run_20260226_124500_finer_offline/intermediate_playbooks/epoch_1_step_150_playbook.txt",
+    "use_bulletpoint_analyzer": false,
+    "bulletpoint_analyzer_threshold": 0.9,
+    "api_provider": "sambanova"
+  }
+}

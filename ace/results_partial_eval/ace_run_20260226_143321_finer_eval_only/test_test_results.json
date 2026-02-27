@@ -1,0 +1,12 @@
+{
+  "test_results": {
+    "accuracy": 0.0,
+    "correct": 0,
+    "total": 0,
+    "no_answer": 0
+  },
+  "error_log": {
+    "accuracy": 0.0,
+    "errors": []
+  }
+}

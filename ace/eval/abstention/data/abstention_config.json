@@ -1,0 +1,26 @@
+{
+    "umwp": {
+        "train_data": "./eval/abstention/data/umwp_train.jsonl",
+        "val_data": "./eval/abstention/data/umwp_val.jsonl",
+        "test_data": "./eval/abstention/data/umwp_test.jsonl"
+    },
+    "selfaware": {
+        "train_data": "./eval/abstention/data/selfaware_train.jsonl",
+        "val_data": "./eval/abstention/data/selfaware_val.jsonl",
+        "test_data": "./eval/abstention/data/selfaware_test.jsonl"
+    },
+    "falseqa": {
+        "train_data": "./eval/abstention/data/falseqa_train.jsonl",
+        "val_data": "./eval/abstention/data/falseqa_val.jsonl",
+        "test_data": "./eval/abstention/data/falseqa_test.jsonl"
+    },
+    "umwp_online": {
+        "test_data": "./eval/abstention/data/umwp_all.jsonl"
+    },
+    "selfaware_online": {
+        "test_data": "./eval/abstention/data/selfaware_all.jsonl"
+    },
+    "falseqa_online": {
+        "test_data": "./eval/abstention/data/falseqa_all.jsonl"
+    }
+}

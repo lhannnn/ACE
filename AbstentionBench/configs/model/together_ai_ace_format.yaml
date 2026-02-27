@@ -1,0 +1,11 @@
+# @package _global_
+
+model_name: TogetherAIAPI_ACEFormat
+
+module:
+  _target_: recipe.models.${model_name}
+  together_model_name: meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo
+  max_tokens: 4000
+  temperature: 0.8
+  seed: ${seed}
+  ace_context_key: umwp
