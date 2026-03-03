@@ -28,5 +28,9 @@ ace/results/
 AbstentionBench/logs/
 AbstentionBench/results/
 
+# Large data files (downloadable, exceed GitHub 100MB limit)
+AbstentionBench/data/
+*.arrow
+
 # Lock files (large, regenerable)
 ace/uv.lock

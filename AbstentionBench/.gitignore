@@ -205,3 +205,4 @@ __marimo__/
 
 playground*.ipynb
 data/*
+!data/DATASET_SOURCES.md

@@ -22,5 +22,13 @@
     },
     "falseqa_online": {
         "test_data": "./eval/abstention/data/falseqa_all.jsonl"
+    },
+    "coconot": {
+        "train_data": "./eval/abstention/data/coconot_train.jsonl",
+        "val_data": "./eval/abstention/data/coconot_val.jsonl",
+        "test_data": "./eval/abstention/data/coconot_test.jsonl"
+    },
+    "coconot_online": {
+        "test_data": "./eval/abstention/data/coconot_all.jsonl"
     }
 }

@@ -13,8 +13,8 @@ class FreshQADataset(AbstentionDataset):
 
     def __init__(
         self,
-        path_baseline="/large_experiments/robust_vlm/abstention-bench/datasets/freshqa/FreshQA_v10282024.csv",
-        path_updated="/large_experiments/robust_vlm/abstention-bench/datasets/freshqa/FreshQA_v12182024.csv",
+        path_baseline="data/freshqa/FreshQA_v10282024.csv",
+        path_updated="data/freshqa/FreshQA_v12182024.csv",
         max_num_samples=None,
     ):
         super().__init__()

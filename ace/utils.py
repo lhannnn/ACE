@@ -177,7 +177,10 @@ def evaluate_single_test_sample(args_tuple, data_processor) -> Tuple[Dict, str]:
         )
 
         final_answer = extract_answer(gen_response)
-        is_correct = data_processor.answer_is_correct(final_answer, target)
+        is_correct = data_processor.answer_is_correct(
+            final_answer, target,
+            full_response=gen_response, task_dict=task_dict
+        )
 
         return {
             "index": i,

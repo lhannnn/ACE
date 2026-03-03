@@ -31,7 +31,8 @@ def parse_args():
         "--task_name",
         type=str,
         required=True,
-        choices=["umwp", "selfaware", "falseqa", "umwp_online", "selfaware_online", "falseqa_online"],
+        choices=["umwp", "selfaware", "falseqa", "coconot",
+                 "umwp_online", "selfaware_online", "falseqa_online", "coconot_online"],
         help="Task name",
     )
     parser.add_argument("--initial_playbook_path", type=str, default=None)
@@ -77,8 +78,10 @@ def parse_args():
     return parser.parse_args()
 
 
-def preprocess_data(task_name, config, mode):
-    processor = DataProcessor(task_name=task_name)
+def preprocess_data(task_name, config, mode, judge_client=None, judge_model=None):
+    processor = DataProcessor(task_name=task_name,
+                              judge_client=judge_client,
+                              judge_model=judge_model)
 
     if mode in ["online", "eval_only"]:
         train_samples = None
@@ -133,8 +136,27 @@ def main():
     with open(args.config_path, "r") as f:
         task_config = json.load(f)
 
+    # Initialize a dedicated judge client for LLM-based abstention detection
+    import openai as _openai
+    provider_urls = {
+        "together": "https://api.together.xyz/v1",
+        "sambanova": "https://api.sambanova.ai/v1",
+        "openai": "https://api.openai.com/v1",
+    }
+    provider_keys = {
+        "together": os.getenv("TOGETHER_API_KEY", ""),
+        "sambanova": os.getenv("SAMBANOVA_API_KEY", ""),
+        "openai": os.getenv("OPENAI_API_KEY", ""),
+    }
+    judge_client = _openai.OpenAI(
+        api_key=provider_keys[args.api_provider],
+        base_url=provider_urls[args.api_provider],
+    )
+    print(f"LLM Judge initialized: {args.generator_model} via {args.api_provider}")
+
     train_samples, val_samples, test_samples, data_processor = preprocess_data(
-        args.task_name, task_config[args.task_name], args.mode
+        args.task_name, task_config[args.task_name], args.mode,
+        judge_client=judge_client, judge_model=args.generator_model,
     )
 
     initial_playbook = load_initial_playbook(args.initial_playbook_path)
