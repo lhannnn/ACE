@@ -1,0 +1,32 @@
+model_name_formatted,scenario_label,dataset_name_formatted,post_training_stage,precision,recall,f1_score
+Llama 3.1 8B Instruct,answer unknown,BB/Known unknowns,Instruct,0.8846153846153846,1.0,0.9387755102040817
+Llama 3.1 8B Instruct,answer unknown,CoCoNot/Unknowns,Instruct,1.0,1.0,1.0
+Llama 3.1 8B Instruct,answer unknown,CoCoNot/Unsupported,Instruct,1.0,0.6,0.75
+Llama 3.1 8B Instruct,answer unknown,KUQ/Future unknowns,Instruct,0.7272727272727273,0.8,0.7619047619047619
+Llama 3.1 8B Instruct,answer unknown,KUQ/Unsolved problems,Instruct,0.5,0.5,0.5
+Llama 3.1 8B Instruct,false premise,CoCoNot/False presumptions,Instruct,1.0,0.3333333333333333,0.5
+Llama 3.1 8B Instruct,false premise,FalseQA,Instruct,0.8529411764705882,0.5087719298245614,0.6373626373626373
+Llama 3.1 8B Instruct,false premise,KUQ/False assumptions,Instruct,0.8,0.5714285714285714,0.6666666666666666
+Llama 3.1 8B Instruct,false premise,QAQA,Instruct,0.7878787878787878,0.48148148148148145,0.5977011494252874
+Llama 3.1 8B Instruct,stale,CoCoNot/Temporal,Instruct,1.0,0.75,0.8571428571428571
+Llama 3.1 8B Instruct,stale,FreshQA,Instruct,0.26666666666666666,0.7619047619047619,0.3950617283950617
+Llama 3.1 8B Instruct,subjective,CoCoNot/Humanizing,Instruct,1.0,1.0,1.0
+Llama 3.1 8B Instruct,subjective,CoCoNot/Subjective,Instruct,1.0,0.6666666666666666,0.8
+Llama 3.1 8B Instruct,subjective,KUQ/Controversial,Instruct,1.0,0.7142857142857143,0.8333333333333334
+Llama 3.1 8B Instruct,subjective,MoralChoice,Instruct,1.0,0.3333333333333333,0.5
+Llama 3.1 8B Instruct,underspecified context,ALCUNA,Instruct,0.8461538461538461,0.9361702127659575,0.8888888888888888
+Llama 3.1 8B Instruct,underspecified context,BB/Disambiguate,Instruct,0.3473684210526316,1.0,0.515625
+Llama 3.1 8B Instruct,underspecified context,BBQ,Instruct,0.8727272727272727,0.9411764705882353,0.9056603773584906
+Llama 3.1 8B Instruct,underspecified context,GPQA-Diamond,Instruct,0.9259259259259259,0.625,0.746268656716418
+Llama 3.1 8B Instruct,underspecified context,GSM8K,Instruct,1.0,0.9555555555555556,0.9772727272727273
+Llama 3.1 8B Instruct,underspecified context,MMLU History,Instruct,0.8181818181818182,0.46153846153846156,0.5901639344262295
+Llama 3.1 8B Instruct,underspecified context,MMLU Math,Instruct,0.9696969696969697,0.6808510638297872,0.8
+Llama 3.1 8B Instruct,underspecified context,MediQ,Instruct,0.75,0.06521739130434782,0.12
+Llama 3.1 8B Instruct,underspecified context,Musique,Instruct,0.8222222222222222,0.9024390243902439,0.8604651162790697
+Llama 3.1 8B Instruct,underspecified context,QASPER,Instruct,0.2413793103448276,1.0,0.3888888888888889
+Llama 3.1 8B Instruct,underspecified context,SQuAD 2.0,Instruct,0.9767441860465116,0.7777777777777778,0.865979381443299
+Llama 3.1 8B Instruct,underspecified context,UMWP,Instruct,1.0,0.49056603773584906,0.6582278481012658
+Llama 3.1 8B Instruct,underspecified context,WorldSense,Instruct,0.3181818181818182,0.6363636363636364,0.42424242424242425
+Llama 3.1 8B Instruct,underspecified intent,CoCoNot/Incomprehensible,Instruct,1.0,1.0,1.0
+Llama 3.1 8B Instruct,underspecified intent,KUQ/Ambiguous,Instruct,0.625,0.8333333333333334,0.7142857142857143
+Llama 3.1 8B Instruct,underspecified intent,SituatedQA/Geo,Instruct,0.3448275862068966,0.6666666666666666,0.45454545454545453

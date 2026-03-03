@@ -306,6 +306,7 @@ def _format_model_name(model_name):
         "S1_1_32B": "S1.1 32B",
         "o1API": "o1",
         "Qwen2_5_32B_Instruct": "Qwen2.5 32B",
+        "TogetherAIAPI": "Llama 3.1 8B Instruct",
     }
     try:
         return model_name_map[model_name]

@@ -260,7 +260,12 @@ class ACE:
                     prefix="initial"
                 )
                 results['initial_test_results'] = initial_test_results
-                print(f"Initial Test Accuracy: {initial_test_results['accuracy']:.3f}\n")
+                if 'precision' in initial_test_results:
+                    print(f"Initial Test P={initial_test_results['precision']:.3f} "
+                          f"R={initial_test_results['recall']:.3f} "
+                          f"F1={initial_test_results['f1']:.3f}\n")
+                else:
+                    print(f"Initial Test Accuracy: {initial_test_results.get('accuracy', 0):.3f}\n")
             
             # 2. Run offline training
             print(f"\n{'='*60}")
@@ -293,7 +298,12 @@ class ACE:
                     prefix="final"
                 )
                 results['final_test_results'] = final_test_results
-                print(f"Final Test Accuracy: {final_test_results['accuracy']:.3f}\n")
+                if 'precision' in final_test_results:
+                    print(f"Final Test P={final_test_results['precision']:.3f} "
+                          f"R={final_test_results['recall']:.3f} "
+                          f"F1={final_test_results['f1']:.3f}\n")
+                else:
+                    print(f"Final Test Accuracy: {final_test_results.get('accuracy', 0):.3f}\n")
         
         elif mode == 'online':
             # ONLINE MODE WORKFLOW
@@ -311,7 +321,12 @@ class ACE:
                 prefix="initial"
             )
             results['initial_test_results'] = initial_test_results
-            print(f"Initial Test Accuracy: {initial_test_results['accuracy']:.3f}\n")
+            if 'precision' in initial_test_results:
+                print(f"Initial Test P={initial_test_results['precision']:.3f} "
+                      f"R={initial_test_results['recall']:.3f} "
+                      f"F1={initial_test_results['f1']:.3f}\n")
+            else:
+                print(f"Initial Test Accuracy: {initial_test_results.get('accuracy', 0):.3f}\n")
             
             # 2. Run online training and testing
             print(f"\n{'='*60}")
@@ -354,16 +369,24 @@ class ACE:
         print(f"RUN COMPLETE")
         print(f"{'='*60}")
         print(f"Mode: {mode.upper().replace('_', ' ')}")
+        def _fmt(r):
+            if 'precision' in r:
+                return f"P={r['precision']:.3f} R={r['recall']:.3f} F1={r['f1']:.3f}"
+            return f"Accuracy={r.get('accuracy', 0):.3f}"
         if mode == 'offline':
-            print(f"Best Validation Accuracy: {results['training_results']['best_validation_accuracy']:.3f}")
+            tr = results.get('training_results', {})
+            if 'best_validation_f1' in tr:
+                print(f"Best Validation F1: {tr['best_validation_f1']:.3f}")
+            else:
+                print(f"Best Validation Accuracy: {tr.get('best_validation_accuracy', 0):.3f}")
             if test_samples:
-                print(f"Initial Test Accuracy: {results['initial_test_results']['accuracy']:.3f}")
-                print(f"Final Test Accuracy: {results['final_test_results']['accuracy']:.3f}")
+                print(f"Initial Test: {_fmt(results['initial_test_results'])}")
+                print(f"Final Test:   {_fmt(results['final_test_results'])}")
         elif mode == 'online':
-            print(f"Initial Test Accuracy: {results['initial_test_results']['accuracy']:.3f}")
-            print(f"Final Test Accuracy: {results['online_test_results']['accuracy']:.3f}")
+            print(f"Initial Test: {_fmt(results['initial_test_results'])}")
+            print(f"Final Test:   {_fmt(results['online_test_results'])}")
         else:  # eval_only
-            print(f"Test Accuracy: {results['test_results']['accuracy']:.3f}")
+            print(f"Test: {_fmt(results['test_results'])}")
         print(f"Results saved to: {save_path}")
         print(f"{'='*60}\n")
         
@@ -472,12 +495,16 @@ class ACE:
             log_dir=log_dir
         )
         
-        # Extract answer and check correctness
+        # Extract answer and check correctness + abstention
         final_answer = extract_answer(gen_response)
-        is_correct = data_processor.answer_is_correct(
+        raw = data_processor.answer_is_correct(
             final_answer, target,
             full_response=gen_response, task_dict=task_dict
         )
+        if isinstance(raw, tuple):
+            is_correct, is_abstention = raw
+        else:
+            is_correct, is_abstention = raw, None
         pre_train_answer = final_answer
         
         print(f"Correct: {is_correct}")
@@ -487,10 +514,13 @@ class ACE:
                        playbook=self.playbook, is_correct=is_correct)
         
         # Track pre-train result
+        others = task_dict.get("others", {})
         tracking_dict = {
             "pre_train_result": {
                 "final_answer": final_answer,
                 "is_correct": is_correct,
+                "is_abstention": is_abstention,
+                "should_abstain": others.get("should_abstain", False),
                 "playbook_num_tokens": count_tokens(self.playbook),
                 "playbook_length": len(self.playbook)
             }
@@ -542,10 +572,12 @@ class ACE:
                 
                 final_answer = extract_answer(gen_response)
                 
-                if data_processor.answer_is_correct(
+                raw_reflect = data_processor.answer_is_correct(
                     final_answer, target,
                     full_response=gen_response, task_dict=task_dict
-                ):
+                )
+                is_correct_after_reflect = raw_reflect[0] if isinstance(raw_reflect, tuple) else raw_reflect
+                if is_correct_after_reflect:
                     print(f"Corrected after reflection round {round_num + 1}!")
                     is_correct = True
                     break
@@ -625,13 +657,19 @@ class ACE:
         final_answer = extract_answer(gen_response)
         post_train_answer = final_answer
         
-        post_train_is_correct = data_processor.answer_is_correct(
+        raw_post = data_processor.answer_is_correct(
             final_answer, target,
             full_response=gen_response, task_dict=task_dict
         )
+        if isinstance(raw_post, tuple):
+            post_train_is_correct, post_is_abstention = raw_post
+        else:
+            post_train_is_correct, post_is_abstention = raw_post, None
         tracking_dict["post_train_result"] = {
             "final_answer": final_answer,
             "is_correct": post_train_is_correct,
+            "is_abstention": post_is_abstention,
+            "should_abstain": others.get("should_abstain", False),
             "playbook_num_tokens": count_tokens(self.playbook),
             "playbook_length": len(self.playbook)
         }
@@ -675,11 +713,13 @@ class ACE:
         use_json_mode = config_params['use_json_mode']
         curator_frequency = config_params['curator_frequency']
         
+        is_abstention_task = hasattr(data_processor, 'evaluate_abstention_metrics')
+        
         # Initialize tracking
         results = []
         pre_train_post_train_results = []
         error_logs = []
-        best_accuracy = 0.0
+        best_metric = 0.0  # F1 for abstention tasks, accuracy for others
         self.best_playbook = self.playbook
 
         print(f"Total epochs: {num_epochs}")
@@ -694,10 +734,13 @@ class ACE:
             print(f"EPOCH {epoch}/{num_epochs}")
             print(f"{'='*60}")
             
-            epoch_answers_pre_train = []
-            epoch_targets_pre_train = []
-            epoch_answers_post_train = []
-            epoch_targets_post_train = []
+            epoch_pre_should = []
+            epoch_pre_is_abs = []
+            epoch_post_should = []
+            epoch_post_is_abs = []
+            epoch_answers_pre = []
+            epoch_answers_post = []
+            epoch_targets = []
             
             for step, task_dict in enumerate(train_samples):
                 step += 1
@@ -718,11 +761,16 @@ class ACE:
                     total_samples=len(train_samples)
                 )
                 
-                # Collect answers for accuracy calculation
-                epoch_answers_pre_train.append(pre_train_answer)
-                epoch_targets_pre_train.append(target)
-                epoch_answers_post_train.append(post_train_answer)
-                epoch_targets_post_train.append(target)
+                # Collect data for metric calculation
+                pre_r = tracking_dict["pre_train_result"]
+                post_r = tracking_dict["post_train_result"]
+                epoch_pre_should.append(pre_r.get("should_abstain", False))
+                epoch_pre_is_abs.append(pre_r.get("is_abstention"))
+                epoch_post_should.append(post_r.get("should_abstain", False))
+                epoch_post_is_abs.append(post_r.get("is_abstention"))
+                epoch_answers_pre.append(pre_train_answer)
+                epoch_answers_post.append(post_train_answer)
+                epoch_targets.append(target)
                 
                 # Track pre-train and post-train results
                 pre_train_post_train_result = {
@@ -747,16 +795,25 @@ class ACE:
                     print(f"EVALUATION AT EPOCH {epoch}, STEP {step}")
                     print(f"{'='*40}")
                     
-                    # Compute training accuracies
-                    pre_train_accuracy = data_processor.evaluate_accuracy(
-                        epoch_answers_pre_train, epoch_targets_pre_train
-                    )
-                    post_train_accuracy = data_processor.evaluate_accuracy(
-                        epoch_answers_post_train, epoch_targets_post_train
-                    )
+                    # Compute training metrics
+                    if is_abstention_task:
+                        pre_train_metrics = data_processor.evaluate_abstention_metrics(
+                            epoch_pre_should, epoch_pre_is_abs)
+                        post_train_metrics = data_processor.evaluate_abstention_metrics(
+                            epoch_post_should, epoch_post_is_abs)
+                        train_result_entry = {
+                            "pre_train_metrics": pre_train_metrics,
+                            "post_train_metrics": post_train_metrics}
+                    else:
+                        pre_acc = data_processor.evaluate_accuracy(epoch_answers_pre, epoch_targets)
+                        post_acc = data_processor.evaluate_accuracy(epoch_answers_post, epoch_targets)
+                        train_result_entry = {
+                            "pre_train_accuracy": pre_acc,
+                            "post_train_accuracy": post_acc}
                     
                     # Validation evaluation
                     val_results = {}
+                    val_error_log = {}
                     if val_samples:
                         val_results, val_error_log = evaluate_test_set(
                             data_processor, self.generator, self.playbook, 
@@ -767,10 +824,7 @@ class ACE:
                     result = {
                         "epoch": epoch,
                         "step": step,
-                        "train_result": {
-                            "pre_train_accuracy": pre_train_accuracy,
-                            "post_train_accuracy": post_train_accuracy
-                        },
+                        "train_result": train_result_entry,
                         "val_result": val_results,
                         "playbook_num_tokens": count_tokens(self.playbook),
                         "playbook_length": len(self.playbook),
@@ -784,19 +838,23 @@ class ACE:
                         "error_log": val_error_log
                     })
 
-                    # Track best playbook
+                    # Track best playbook (F1 for abstention, accuracy for others)
                     if val_results:
-                        acc = val_results["accuracy"]
-                        if acc > best_accuracy:
-                            best_accuracy = acc
+                        val_score = val_results.get("f1", val_results.get("accuracy", 0.0))
+                        if val_score > best_metric:
+                            best_metric = val_score
                             self.best_playbook = self.playbook
-                            print(f"🎉 New best accuracy: {best_accuracy:.3f}")
+                            if is_abstention_task:
+                                print(f"New best F1: {best_metric:.3f}")
+                            else:
+                                print(f"New best accuracy: {best_metric:.3f}")
                     
                     # Save results
                     results_path = os.path.join(save_path, "train_results.json")
+                    metric_key = "best_f1" if is_abstention_task else "best_accuracy"
                     with open(results_path, "w") as f:
                         json.dump({
-                            "best_accuracy": best_accuracy,
+                            metric_key: best_metric,
                             "results": results,
                         }, f, indent=2)
                     
@@ -813,9 +871,10 @@ class ACE:
 
         # Save training results
         results_path = os.path.join(save_path, "train_results.json")
+        metric_key = "best_f1" if is_abstention_task else "best_accuracy"
         with open(results_path, "w") as f:
             json.dump({
-                "best_accuracy": best_accuracy,
+                metric_key: best_metric,
                 "results": results,
             }, f, indent=2)
         
@@ -824,22 +883,25 @@ class ACE:
             json.dump(pre_train_post_train_results, f, indent=2)
         
         # Save final playbook
-        final_playbook_path = os.path.join(save_path, f"final_playbook.txt")
+        final_playbook_path = os.path.join(save_path, "final_playbook.txt")
         with open(final_playbook_path, "w") as f:
             f.write(self.playbook)
         
         # Save best playbook
-        best_playbook_path = os.path.join(save_path, f"best_playbook.txt")
+        best_playbook_path = os.path.join(save_path, "best_playbook.txt")
         with open(best_playbook_path, "w") as f:
             f.write(self.best_playbook)
         
         print(f"\n{'='*60}")
         print(f"OFFLINE TRAINING COMPLETE")
         print(f"{'='*60}")
-        print(f"Best Validation Accuracy: {best_accuracy:.3f}")
+        if is_abstention_task:
+            print(f"Best Validation F1: {best_metric:.3f}")
+        else:
+            print(f"Best Validation Accuracy: {best_metric:.3f}")
         print(f"{'='*60}\n")
 
-        return {"best_validation_accuracy": best_accuracy}
+        return {"best_validation_f1": best_metric} if is_abstention_task else {"best_validation_accuracy": best_metric}
 
     
     def test(
@@ -922,15 +984,18 @@ class ACE:
         save_steps = config_params['save_steps']
         use_json_mode = config_params['use_json_mode']
         test_workers = config_params['test_workers']
-        online_eval_frequency = config.get('online_eval_frequency', 100)  # Get from config
+        online_eval_frequency = config.get('online_eval_frequency', 100)
+        is_abstention_task = hasattr(data_processor, 'evaluate_abstention_metrics')
         
         # Initialize tracking
         train_results = []
         pre_train_post_train_results = []
         
         # Test tracking - accumulate across all windows
-        correct_count_sample_based = 0
-        correct_count = 0
+        cumulative_tp = 0
+        cumulative_fp = 0
+        cumulative_fn = 0
+        cumulative_tn = 0
         total_count = 0
         all_test_errors = []
         window_test_results = []
@@ -972,13 +1037,16 @@ class ACE:
                 use_json_mode=use_json_mode
             )
             
-            # Extract results
-            window_accuracy = window_test_results_dict['accuracy']
-            window_correct = window_test_results_dict['correct']
-            window_total = window_test_results_dict['total']
-            correct_count_sample_based += window_correct
-            correct_count += window_accuracy * window_total
+            # Extract window results
+            w = window_test_results_dict
+            window_total = w['total']
             total_count += window_total
+            
+            if is_abstention_task:
+                cumulative_tp += w.get('tp', 0)
+                cumulative_fp += w.get('fp', 0)
+                cumulative_fn += w.get('fn', 0)
+                cumulative_tn += w.get('tn', 0)
             
             # Add errors with window and global index information
             for error in window_test_error_log['errors']:
@@ -989,31 +1057,46 @@ class ACE:
                     "ground_truth": error['ground_truth']
                 })
             
-            window_test_results.append({
-                "window": window_idx + 1,
-                "start_idx": start_idx,
-                "end_idx": end_idx,
-                "window_accuracy": window_accuracy,
-                "window_correct": window_correct,
-                "window_total": window_total
-            })
-            
-            # Calculate cumulative test accuracy so far
-            cumulative_test_accuracy = correct_count / total_count
-            
-            print(f"Window {window_idx + 1} test accuracy: {window_accuracy:.3f}")
-            print(f"Cumulative test accuracy so far: {cumulative_test_accuracy:.3f} "
-                  f"({total_count} samples)")
+            if is_abstention_task:
+                window_test_results.append({
+                    "window": window_idx + 1,
+                    "start_idx": start_idx,
+                    "end_idx": end_idx,
+                    "window_precision": w.get('precision', 0.0),
+                    "window_recall": w.get('recall', 0.0),
+                    "window_f1": w.get('f1', 0.0),
+                    "window_total": window_total
+                })
+                
+                cum_p = cumulative_tp / (cumulative_tp + cumulative_fp) if (cumulative_tp + cumulative_fp) else 0.0
+                cum_r = cumulative_tp / (cumulative_tp + cumulative_fn) if (cumulative_tp + cumulative_fn) else 0.0
+                cum_f1 = 2 * cum_p * cum_r / (cum_p + cum_r) if (cum_p + cum_r) else 0.0
+                
+                print(f"Window {window_idx + 1} test: P={w.get('precision',0):.3f} R={w.get('recall',0):.3f} F1={w.get('f1',0):.3f}")
+                print(f"Cumulative: P={cum_p:.3f} R={cum_r:.3f} F1={cum_f1:.3f} ({total_count} samples)")
+            else:
+                window_test_results.append({
+                    "window": window_idx + 1,
+                    "start_idx": start_idx,
+                    "end_idx": end_idx,
+                    "window_accuracy": w.get('accuracy', 0.0),
+                    "window_total": window_total
+                })
+                cum_acc = w.get('accuracy', 0.0)
+                print(f"Window {window_idx + 1} test accuracy: {cum_acc:.3f} ({total_count} samples)")
             
             # =================================================================
             # STEP 2: TRAIN on window (same as offline_train)
             # =================================================================
             print(f"\n--- Training on window {window_idx + 1} ---")
             
-            epoch_answers_pre_train = []
-            epoch_targets_pre_train = []
-            epoch_answers_post_train = []
-            epoch_targets_post_train = []
+            win_pre_should = []
+            win_pre_is_abs = []
+            win_post_should = []
+            win_post_is_abs = []
+            win_answers_pre = []
+            win_answers_post = []
+            win_targets = []
             
             for local_step, task_dict in enumerate(window_samples):
                 global_step += 1
@@ -1037,11 +1120,16 @@ class ACE:
                     total_samples=len(test_samples)
                 )
                 
-                # Collect answers for accuracy calculation
-                epoch_answers_pre_train.append(pre_train_answer)
-                epoch_targets_pre_train.append(target)
-                epoch_answers_post_train.append(post_train_answer)
-                epoch_targets_post_train.append(target)
+                # Collect data for metric calculation
+                pre_r = tracking_dict["pre_train_result"]
+                post_r = tracking_dict["post_train_result"]
+                win_pre_should.append(pre_r.get("should_abstain", False))
+                win_pre_is_abs.append(pre_r.get("is_abstention"))
+                win_post_should.append(post_r.get("should_abstain", False))
+                win_post_is_abs.append(post_r.get("is_abstention"))
+                win_answers_pre.append(pre_train_answer)
+                win_answers_post.append(post_train_answer)
+                win_targets.append(target)
                 
                 # Track pre-train and post-train results
                 pre_train_post_train_result = {
@@ -1060,22 +1148,27 @@ class ACE:
                     with open(intermediate_path, "w") as f:
                         f.write(self.playbook)
             
-            # End of window - compute training accuracies for this window
-            pre_train_accuracy = data_processor.evaluate_accuracy(
-                epoch_answers_pre_train, epoch_targets_pre_train
-            )
-            post_train_accuracy = data_processor.evaluate_accuracy(
-                epoch_answers_post_train, epoch_targets_post_train
-            )
+            # End of window - compute training metrics
+            if is_abstention_task:
+                pre_train_metrics = data_processor.evaluate_abstention_metrics(
+                    win_pre_should, win_pre_is_abs)
+                post_train_metrics = data_processor.evaluate_abstention_metrics(
+                    win_post_should, win_post_is_abs)
+                train_entry = {
+                    "pre_train_metrics": pre_train_metrics,
+                    "post_train_metrics": post_train_metrics}
+            else:
+                pre_acc = data_processor.evaluate_accuracy(win_answers_pre, win_targets)
+                post_acc = data_processor.evaluate_accuracy(win_answers_post, win_targets)
+                train_entry = {
+                    "pre_train_accuracy": pre_acc,
+                    "post_train_accuracy": post_acc}
             
             window_train_result = {
                 "window": window_idx + 1,
                 "global_step": global_step,
-                "train_result": {
-                    "pre_train_accuracy": pre_train_accuracy,
-                    "post_train_accuracy": post_train_accuracy
-                },
-                "cumulative_test_accuracy": cumulative_test_accuracy,
+                "train_result": train_entry,
+                "cumulative_test_f1": cum_f1 if is_abstention_task else None,
                 "playbook_num_tokens": count_tokens(self.playbook),
                 "playbook_length": len(self.playbook),
                 "playbook_stats": get_playbook_stats(self.playbook)
@@ -1083,8 +1176,12 @@ class ACE:
             train_results.append(window_train_result)
             
             print(f"\nWindow {window_idx + 1} training complete:")
-            print(f"  Pre-train accuracy: {pre_train_accuracy:.3f}")
-            print(f"  Post-train accuracy: {post_train_accuracy:.3f}")
+            if is_abstention_task:
+                print(f"  Pre-train:  P={pre_train_metrics['precision']:.3f} R={pre_train_metrics['recall']:.3f} F1={pre_train_metrics['f1']:.3f}")
+                print(f"  Post-train: P={post_train_metrics['precision']:.3f} R={post_train_metrics['recall']:.3f} F1={post_train_metrics['f1']:.3f}")
+            else:
+                print(f"  Pre-train accuracy: {pre_acc:.3f}")
+                print(f"  Post-train accuracy: {post_acc:.3f}")
             
             # Save window playbook
             window_playbook_path = os.path.join(
@@ -1098,30 +1195,53 @@ class ACE:
         print(f"ONLINE TRAIN AND TEST COMPLETE")
         print(f"{'='*60}")
         
-        # Calculate final cumulative test accuracy
         assert total_count == len(test_samples)
-        final_test_accuracy = correct_count / total_count
         
-        test_results = {
-            "accuracy": final_test_accuracy,
-            "correct": correct_count_sample_based,
-            "total": total_count,
-            "window_results": window_test_results
-        }
-        
-        test_error_log = {
-            "accuracy": final_test_accuracy,
-            "errors": all_test_errors
-        }
+        if is_abstention_task:
+            final_p = cumulative_tp / (cumulative_tp + cumulative_fp) if (cumulative_tp + cumulative_fp) else 0.0
+            final_r = cumulative_tp / (cumulative_tp + cumulative_fn) if (cumulative_tp + cumulative_fn) else 0.0
+            final_f1 = 2 * final_p * final_r / (final_p + final_r) if (final_p + final_r) else 0.0
+            
+            test_results = {
+                "precision": final_p, "recall": final_r, "f1": final_f1,
+                "tp": cumulative_tp, "fp": cumulative_fp,
+                "fn": cumulative_fn, "tn": cumulative_tn,
+                "total": total_count,
+                "window_results": window_test_results
+            }
+            test_error_log = {
+                "precision": final_p, "recall": final_r, "f1": final_f1,
+                "errors": all_test_errors
+            }
+            save_dict = {
+                "test_metrics": {"precision": final_p, "recall": final_r, "f1": final_f1},
+                "test_results": test_results,
+                "test_error_log": test_error_log
+            }
+            return_dict = {
+                "precision": final_p, "recall": final_r, "f1": final_f1,
+                "tp": cumulative_tp, "fp": cumulative_fp,
+                "fn": cumulative_fn, "tn": cumulative_tn,
+                "total": total_count,
+            }
+            summary = f"Final Test: P={final_p:.3f} R={final_r:.3f} F1={final_f1:.3f}"
+        else:
+            test_results = {
+                "total": total_count,
+                "window_results": window_test_results
+            }
+            test_error_log = {"errors": all_test_errors}
+            save_dict = {
+                "test_results": test_results,
+                "test_error_log": test_error_log
+            }
+            return_dict = {"total": total_count}
+            summary = f"Total: {total_count}"
 
         # Save test results
         test_results_path = os.path.join(save_path, "test_results.json")
         with open(test_results_path, "w") as f:
-            json.dump({
-                "test_accuracy": final_test_accuracy,
-                "test_results": test_results,
-                "test_error_log": test_error_log
-            }, f, indent=2)
+            json.dump(save_dict, f, indent=2)
         
         # Save training results (per window)
         train_results_path = os.path.join(save_path, "train_results.json")
@@ -1134,18 +1254,14 @@ class ACE:
             json.dump(pre_train_post_train_results, f, indent=2)
         
         # Save final playbook
-        final_playbook_path = os.path.join(save_path, f"final_playbook.txt")
+        final_playbook_path = os.path.join(save_path, "final_playbook.txt")
         with open(final_playbook_path, "w") as f:
             f.write(self.playbook)
         
         print(f"\n{'='*60}")
         print(f"ONLINE TRAINING AND TESTING COMPLETE")
         print(f"{'='*60}")
-        print(f"Final Test Accuracy: {final_test_accuracy:.3f}")
+        print(summary)
         print(f"{'='*60}\n")
         
-        return {
-            "accuracy": final_test_accuracy,
-            "correct": correct_count_sample_based,
-            "total": total_count,
-        }
+        return return_dict

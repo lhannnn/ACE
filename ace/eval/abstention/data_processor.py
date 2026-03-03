@@ -188,21 +188,19 @@ class DataProcessor:
         return None
 
     def answer_is_correct(self, predicted: str, ground_truth: str,
-                          full_response: str = None, task_dict: dict = None) -> bool:
+                          full_response: str = None,
+                          task_dict: dict = None) -> Tuple[bool, Optional[bool]]:
         """
-        Check if answer is correct using LLM Judge (when available) or fallback.
+        Check if answer is correct and detect abstention.
 
-        Args:
-            predicted: Extracted final answer
-            ground_truth: Ground truth target ("ABSTAIN" or reference answer)
-            full_response: Full model response (for LLM Judge)
-            task_dict: Full sample dict with question, context, others (for LLM Judge)
+        Returns:
+            (is_correct, is_abstention) where is_correct drives training
+            decisions and is_abstention is the raw LLM Judge label used
+            for AbstentionBench-style precision/recall/F1 metrics.
         """
         if self.judge_client and full_response and task_dict:
             others = task_dict.get("others", {})
 
-            # Use final_answer for judge when extraction succeeded;
-            # fall back to full response only when extraction failed
             if predicted and predicted != "No final answer found":
                 judge_input = predicted
             else:
@@ -217,16 +215,17 @@ class DataProcessor:
 
             if is_abstention is not None:
                 if ground_truth == "ABSTAIN":
-                    return is_abstention
+                    return is_abstention, is_abstention
                 else:
                     if is_abstention:
-                        return False
-                    return self._check_answer_match(predicted, ground_truth)
+                        return False, is_abstention
+                    return self._check_answer_match(predicted, ground_truth), is_abstention
 
         # Fallback: no judge available or judge failed
         return self._fallback_answer_is_correct(predicted, ground_truth)
 
-    def _fallback_answer_is_correct(self, predicted: str, ground_truth: str) -> bool:
+    def _fallback_answer_is_correct(self, predicted: str,
+                                    ground_truth: str) -> Tuple[bool, Optional[bool]]:
         """Keyword-based evaluation (used when LLM Judge is unavailable)."""
         KEYWORDS = [
             "i cannot", "i can't", "cannot be answered", "unable to",
@@ -239,10 +238,10 @@ class DataProcessor:
         is_abstention = any(kw in pred_lower for kw in KEYWORDS)
 
         if ground_truth == "ABSTAIN":
-            return is_abstention
+            return is_abstention, is_abstention
         if is_abstention:
-            return False
-        return self._check_answer_match(predicted, ground_truth)
+            return False, is_abstention
+        return self._check_answer_match(predicted, ground_truth), is_abstention
 
     def _check_answer_match(self, predicted: str, ground_truth: str) -> bool:
         pred = predicted.strip().lower()
@@ -271,16 +270,40 @@ class DataProcessor:
 
         return False
 
-    def evaluate_accuracy(self, predictions: List[str], ground_truths: List[str]) -> float:
-        if len(predictions) != len(ground_truths):
-            raise ValueError("Predictions and ground truths must have same length")
+    @staticmethod
+    def evaluate_abstention_metrics(should_abstain_list: List[bool],
+                                    is_abstention_list: List[Optional[bool]]) -> Dict[str, Any]:
+        """
+        Compute AbstentionBench-style precision / recall / F1.
 
-        if not predictions:
-            return 0.0
+        Samples where is_abstention is None (indeterminate judge result)
+        are excluded, matching AbstentionBench's filter_indeterminate behaviour.
+        """
+        from sklearn.metrics import precision_score, recall_score, f1_score
 
-        correct = sum(
-            1
-            for pred, gt in zip(predictions, ground_truths)
-            if self._fallback_answer_is_correct(pred, gt)
-        )
-        return correct / len(predictions)
+        y_true, y_pred = [], []
+        indeterminate = 0
+        for sa, ia in zip(should_abstain_list, is_abstention_list):
+            if ia is None:
+                indeterminate += 1
+                continue
+            y_true.append(sa)
+            y_pred.append(ia)
+
+        if not y_true:
+            return {"precision": 0.0, "recall": 0.0, "f1": 0.0,
+                    "tp": 0, "fp": 0, "fn": 0, "tn": 0,
+                    "total": 0, "indeterminate": indeterminate}
+
+        tp = sum(1 for t, p in zip(y_true, y_pred) if t and p)
+        fp = sum(1 for t, p in zip(y_true, y_pred) if not t and p)
+        fn = sum(1 for t, p in zip(y_true, y_pred) if t and not p)
+        tn = sum(1 for t, p in zip(y_true, y_pred) if not t and not p)
+
+        precision = precision_score(y_true, y_pred, zero_division=0)
+        recall = recall_score(y_true, y_pred, zero_division=0)
+        f1 = f1_score(y_true, y_pred, zero_division=0)
+
+        return {"precision": precision, "recall": recall, "f1": f1,
+                "tp": tp, "fp": fp, "fn": fn, "tn": tn,
+                "total": len(y_true), "indeterminate": indeterminate}

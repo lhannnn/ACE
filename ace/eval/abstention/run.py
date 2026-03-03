@@ -31,8 +31,8 @@ def parse_args():
         "--task_name",
         type=str,
         required=True,
-        choices=["umwp", "selfaware", "falseqa", "coconot",
-                 "umwp_online", "selfaware_online", "falseqa_online", "coconot_online"],
+        choices=["umwp", "selfaware", "falseqa", "coconot", "gpqa",
+                 "umwp_online", "selfaware_online", "falseqa_online", "coconot_online", "gpqa_online"],
         help="Task name",
     )
     parser.add_argument("--initial_playbook_path", type=str, default=None)

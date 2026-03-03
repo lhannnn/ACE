@@ -177,16 +177,23 @@ def evaluate_single_test_sample(args_tuple, data_processor) -> Tuple[Dict, str]:
         )
 
         final_answer = extract_answer(gen_response)
-        is_correct = data_processor.answer_is_correct(
+        raw = data_processor.answer_is_correct(
             final_answer, target,
             full_response=gen_response, task_dict=task_dict
         )
+        if isinstance(raw, tuple):
+            is_correct, is_abstention = raw
+        else:
+            is_correct, is_abstention = raw, None
 
+        others = task_dict.get("others", {})
         return {
             "index": i,
             "final_answer": final_answer,
             "target": target,
             "is_correct": is_correct,
+            "is_abstention": is_abstention,
+            "should_abstain": others.get("should_abstain", False),
             "success": True
         }, None
 
@@ -198,20 +205,10 @@ def evaluate_test_set(data_processor, generator, playbook, test_samples,
                       max_tokens=4096, log_dir=None, max_workers=20, 
                       use_json_mode=False) -> Tuple[Dict, Dict]:
     """
-    Parallel evaluation of test set - task-agnostic implementation.
-    
-    Args:
-        data_processor: DataProcessor instance with answer_is_correct and evaluate_accuracy methods
-        generator: Generator instance
-        playbook: Current playbook string
-        test_samples: List of test samples
-        max_tokens: Max tokens for generation
-        log_dir: Directory for logs
-        max_workers: Number of parallel workers
-        use_json_mode: Whether to use JSON mode
-        
+    Parallel evaluation of test set returning AbstentionBench-style metrics.
+
     Returns:
-        Tuple of (results_dict, error_logs_dict)
+        Tuple of (results_dict with P/R/F1, error_logs_dict)
     """
     print(f"\n{'='*40}")
     print(f"EVALUATING TEST SET - {len(test_samples)} samples, {max_workers} workers")
@@ -222,24 +219,27 @@ def evaluate_test_set(data_processor, generator, playbook, test_samples,
         for i, sample in enumerate(test_samples)
     ]
 
+    is_abstention_task = hasattr(data_processor, 'evaluate_abstention_metrics')
+
     results = {
         "correct": 0, "total": 0, "no_answer": 0,
-        "answers": [], "targets": [], "errors": []
+        "should_abstain_list": [], "is_abstention_list": [],
+        "answers": [], "targets": [],
+        "errors": []
     }
 
-    # Use a wrapper to pass data_processor to the evaluation function
     def eval_wrapper(args_tuple):
         return evaluate_single_test_sample(args_tuple, data_processor)
 
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         future_to_args = {
-            executor.submit(eval_wrapper, args): args 
+            executor.submit(eval_wrapper, args): args
             for args in args_list
         }
 
         for i, future in enumerate(as_completed(future_to_args), 1):
             result, error = future.result()
-            
+
             if error:
                 print(error)
                 continue
@@ -249,40 +249,67 @@ def evaluate_test_set(data_processor, generator, playbook, test_samples,
                 results["total"] += 1
                 results["answers"].append(result["final_answer"])
                 results["targets"].append(result["target"])
-                
+                results["should_abstain_list"].append(result["should_abstain"])
+                results["is_abstention_list"].append(result["is_abstention"])
+
                 if not result["is_correct"]:
                     results["errors"].append({
                         "index": result["index"],
                         "prediction": result["final_answer"],
                         "ground_truth": result["target"]
                     })
-                
+
                 if result["final_answer"] == "No final answer found":
                     results["no_answer"] += 1
 
             if i % 50 == 0:
-                curr_acc = results["correct"] / results["total"] if results["total"] > 0 else 0
-                print(f"Progress: {i}/{len(args_list)}, Accuracy: {curr_acc:.3f}")
-    
-    if results["answers"] and results["targets"]:
-        accuracy = data_processor.evaluate_accuracy(results["answers"], results["targets"])
-        
-        final_results = {
-            "accuracy": accuracy,
-            "correct": results["correct"],
-            "total": results["total"],
-            "no_answer": results["no_answer"]
-        }
-        
-        error_logs = {
-            "accuracy": accuracy,
-            "errors": results["errors"]
-        }
-        
-        print(f"\n📊 Final Accuracy: {accuracy:.3f} ({results['correct']}/{results['total']})")
+                if is_abstention_task:
+                    interim = data_processor.evaluate_abstention_metrics(
+                        results["should_abstain_list"],
+                        results["is_abstention_list"])
+                    print(f"Progress: {i}/{len(args_list)}, "
+                          f"P={interim['precision']:.3f} R={interim['recall']:.3f} F1={interim['f1']:.3f}")
+                else:
+                    curr_acc = results["correct"] / results["total"] if results["total"] > 0 else 0
+                    print(f"Progress: {i}/{len(args_list)}, Accuracy: {curr_acc:.3f}")
+
+    if results["total"] > 0:
+        if is_abstention_task:
+            metrics = data_processor.evaluate_abstention_metrics(
+                results["should_abstain_list"],
+                results["is_abstention_list"])
+
+            final_results = {
+                **metrics,
+                "total": results["total"],
+                "no_answer": results["no_answer"]
+            }
+            error_logs = {**metrics, "errors": results["errors"]}
+
+            print(f"\nPrecision: {metrics['precision']:.3f}  "
+                  f"Recall: {metrics['recall']:.3f}  "
+                  f"F1: {metrics['f1']:.3f}  "
+                  f"(TP={metrics['tp']} FP={metrics['fp']} FN={metrics['fn']} TN={metrics['tn']})")
+        else:
+            accuracy = data_processor.evaluate_accuracy(results["answers"], results["targets"])
+            final_results = {
+                "accuracy": accuracy,
+                "correct": results["correct"],
+                "total": results["total"],
+                "no_answer": results["no_answer"]
+            }
+            error_logs = {"accuracy": accuracy, "errors": results["errors"]}
+            print(f"\nFinal Accuracy: {accuracy:.3f} ({results['correct']}/{results['total']})")
     else:
-        final_results = {"accuracy": 0.0, "correct": 0, "total": 0, "no_answer": 0}
-        error_logs = {"accuracy": 0.0, "errors": results.get("errors", [])}
-        print(f"\n📊 No valid results!")
-        
+        if is_abstention_task:
+            empty = {"precision": 0.0, "recall": 0.0, "f1": 0.0,
+                     "tp": 0, "fp": 0, "fn": 0, "tn": 0,
+                     "total": 0, "no_answer": 0, "indeterminate": 0}
+            final_results = empty
+            error_logs = {**empty, "errors": []}
+        else:
+            final_results = {"accuracy": 0.0, "correct": 0, "total": 0, "no_answer": 0}
+            error_logs = {"accuracy": 0.0, "errors": []}
+        print("\nNo valid results!")
+
     return final_results, error_logs

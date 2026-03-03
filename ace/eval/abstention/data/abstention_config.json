@@ -30,5 +30,13 @@
     },
     "coconot_online": {
         "test_data": "./eval/abstention/data/coconot_all.jsonl"
+    },
+    "gpqa": {
+        "train_data": "./eval/abstention/data/gpqa_train.jsonl",
+        "val_data": "./eval/abstention/data/gpqa_val.jsonl",
+        "test_data": "./eval/abstention/data/gpqa_test.jsonl"
+    },
+    "gpqa_online": {
+        "test_data": "./eval/abstention/data/gpqa_all.jsonl"
     }
 }
