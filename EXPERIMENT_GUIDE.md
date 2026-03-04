@@ -114,6 +114,13 @@ The AbstentionBench LLM Judge prompt (from `recipe/evaluation_judge_prompts.py`)
 
 Key finding from our experiments: Using only the extracted `final_answer` for judging gives much lower scores than using the full response, because the reasoning/uncertainty expressions in the full response are lost.
 
+**Strict judge mode (recommended):**
+- In ACE, keep `--strict_judge` enabled (default) so Judge failures are treated as **indeterminate** (`is_abstention=None`) instead of keyword fallback.
+- Report both:
+  - `total`: all samples
+  - `evaluated_total`: samples with determinate judge outputs
+- This keeps metric semantics aligned with AbstentionBench's indeterminate filtering behavior.
+
 ---
 
 ## How to Run Each Condition
@@ -161,6 +168,9 @@ python -m eval.abstention.run \
     --task_name TASK_NAME_online \
     --mode online \
     --api_provider together \
+    --judge_api_provider together \
+    --judge_model meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo \
+    --strict_judge \
     --save_path results
 ```
 

@@ -86,21 +86,128 @@ def call_judge(client, model, question, reference_answers, should_abstain,
     return None
 
 
-def load_responses_from_logs(log_dir, pattern):
-    """Load full model responses from detailed_llm_logs."""
-    files = glob.glob(os.path.join(log_dir, pattern))
-    responses = {}
+def _parse_timestamp(log, fpath):
+    ts = log.get("timestamp")
+    if isinstance(ts, (int, float)):
+        return float(ts)
+
+    dt_str = log.get("datetime")
+    if isinstance(dt_str, str):
+        try:
+            return datetime.fromisoformat(dt_str).timestamp()
+        except ValueError:
+            pass
+
+    return os.path.getmtime(fpath)
+
+
+def _extract_log_index(call_id, eval_type):
+    if eval_type == "pre_train":
+        match = re.search(r"online_train_s_(\d+)_gen_initial(?:_|$)", call_id)
+        if match:
+            return int(match.group(1)) - 1, "pre_train"
+        return None
+
+    if eval_type == "post_train":
+        match = re.search(r"online_train_s_(\d+)_post_curate(?:_|$)", call_id)
+        if match:
+            return int(match.group(1)) - 1, "post_train"
+        return None
+
+    if eval_type == "initial":
+        if match := re.search(r"^initial_test_eval_(\d+)$", call_id):
+            return int(match.group(1)), "initial_test_eval"
+
+        if match := re.search(r"^test_eval_(\d+)$", call_id):
+            return int(match.group(1)), "legacy_test_eval"
+
+        if match := re.search(r"test_eval_(\d+)$", call_id):
+            source = "window_test_eval" if call_id.startswith("window_") else "other_test_eval"
+            return int(match.group(1)), source
+
+    return None
+
+
+def _source_priority(eval_type, source):
+    if eval_type != "initial":
+        return 0
+
+    priority = {
+        "initial_test_eval": 0,
+        "legacy_test_eval": 1,
+        "other_test_eval": 2,
+        "window_test_eval": 3,
+    }
+    return priority.get(source, 99)
+
+
+def load_responses_from_logs(log_dir, pattern, eval_type, expected_total=None):
+    """Load and de-duplicate model responses from detailed_llm_logs."""
+    files = sorted(glob.glob(os.path.join(log_dir, pattern)))
+    candidates = {}
+    parsed_logs = 0
+
     for fpath in files:
         with open(fpath) as f:
             log = json.load(f)
-        call_id = log["call_id"]
-        match = re.search(r"(\d+)", call_id.split("_")[-1]
-                          if "test_eval" not in call_id
-                          else call_id.replace("test_eval_", ""))
-        if match:
-            idx = int(match.group(1))
-            responses[idx] = log["response"]
-    return responses
+
+        call_id = log.get("call_id", "")
+        parsed = _extract_log_index(call_id, eval_type)
+        if parsed is None:
+            continue
+
+        idx, source = parsed
+        if idx < 0:
+            continue
+
+        parsed_logs += 1
+        candidates.setdefault(idx, []).append(
+            {
+                "response": log.get("response", ""),
+                "source": source,
+                "timestamp": _parse_timestamp(log, fpath),
+                "call_id": call_id,
+                "path": fpath,
+            }
+        )
+
+    responses = {}
+    selected_entries = {}
+    duplicate_count = 0
+
+    for idx, entries in candidates.items():
+        if len(entries) > 1:
+            duplicate_count += len(entries) - 1
+        entries.sort(
+            key=lambda e: (
+                _source_priority(eval_type, e["source"]),
+                e["timestamp"],
+                e["path"],
+            )
+        )
+        selected = entries[0]
+        responses[idx] = selected["response"]
+        selected_entries[idx] = {
+            "call_id": selected["call_id"],
+            "source": selected["source"],
+            "path": selected["path"],
+        }
+
+    missing_indices = []
+    if expected_total is not None:
+        missing_indices = [i for i in range(expected_total) if i not in responses]
+
+    stats = {
+        "glob_pattern": pattern,
+        "files_scanned": len(files),
+        "parsed_logs": parsed_logs,
+        "selected_count": len(responses),
+        "duplicate_count": duplicate_count,
+        "missing_count": len(missing_indices),
+        "missing_indices": missing_indices,
+        "selected_entries": selected_entries,
+    }
+    return responses, stats
 
 
 def main():
@@ -116,17 +223,29 @@ def main():
 
     # Determine which logs to load based on eval_type
     if args.eval_type == "initial":
-        pattern = "generator_test_eval_*"
+        pattern = "generator_*test_eval_*.json"
     elif args.eval_type == "pre_train":
-        pattern = "generator_online_train_s_*_gen_initial_*"
+        pattern = "generator_online_train_s_*_gen_initial_*.json"
     elif args.eval_type == "post_train":
-        pattern = "generator_online_train_s_*_post_curate_*"
+        pattern = "generator_online_train_s_*_post_curate_*.json"
     else:
         raise ValueError(f"Unknown eval_type: {args.eval_type}")
 
     print(f"Loading responses from: {pattern}")
-    responses = load_responses_from_logs(log_dir, f"{pattern}.json")
-    print(f"Found {len(responses)} responses")
+    responses, load_stats = load_responses_from_logs(
+        log_dir=log_dir,
+        pattern=pattern,
+        eval_type=args.eval_type,
+        expected_total=len(processed),
+    )
+    print(
+        f"Found {load_stats['selected_count']} responses "
+        f"(parsed={load_stats['parsed_logs']}, duplicates_collapsed={load_stats['duplicate_count']})"
+    )
+    print(
+        f"Coverage: {len(processed) - load_stats['missing_count']}/{len(processed)} "
+        f"(missing={load_stats['missing_count']})"
+    )
 
     if not responses:
         print("No responses found. Check results_dir and eval_type.")
@@ -186,14 +305,15 @@ def main():
     results.sort(key=lambda x: x["index"])
 
     valid = [r for r in results if r["correct"] is not None]
+    indeterminate = len(results) - len(valid)
     tp = sum(1 for r in valid if r["should_abstain"] and r["judge_says_abstention"])
     fn = sum(1 for r in valid if r["should_abstain"] and not r["judge_says_abstention"])
     fp = sum(1 for r in valid if not r["should_abstain"] and r["judge_says_abstention"])
     tn = sum(1 for r in valid if not r["should_abstain"] and not r["judge_says_abstention"])
 
-    total = len(valid)
+    evaluated_total = len(valid)
     correct = sum(1 for r in valid if r["correct"])
-    accuracy = correct / total if total else 0
+    accuracy = correct / evaluated_total if evaluated_total else 0
 
     precision = tp / (tp + fp) if (tp + fp) else 0
     recall = tp / (tp + fn) if (tp + fn) else 0
@@ -202,8 +322,10 @@ def main():
     print(f"\n{'='*60}")
     print(f"LLM JUDGE EVALUATION RESULTS ({args.eval_type})")
     print(f"{'='*60}")
-    print(f"Total evaluated: {total}")
-    print(f"Accuracy: {accuracy:.4f} ({correct}/{total})")
+    print(f"Total samples: {len(results)}")
+    print(f"Evaluated: {evaluated_total}")
+    print(f"Indeterminate: {indeterminate}")
+    print(f"Accuracy: {accuracy:.4f} ({correct}/{evaluated_total})")
     print(f"")
     print(f"Confusion Matrix:")
     print(f"  TP (should abstain, did abstain):     {tp}")
@@ -221,10 +343,13 @@ def main():
         "eval_type": args.eval_type,
         "judge_model": args.judge_model,
         "data_path": args.data_path,
-        "total": total,
+        "total": len(results),
+        "evaluated_total": evaluated_total,
+        "indeterminate": indeterminate,
         "accuracy": accuracy,
         "tp": tp, "fn": fn, "fp": fp, "tn": tn,
         "precision": precision, "recall": recall, "f1": f1,
+        "log_selection": load_stats,
         "timestamp": datetime.now().isoformat(),
         "details": results,
     }

@@ -429,7 +429,8 @@ class ACE:
             self.max_tokens,
             log_dir,
             max_workers=test_workers,
-            use_json_mode=use_json_mode
+            use_json_mode=use_json_mode,
+            call_id_prefix=f"{prefix}_test_eval",
         )
 
         # Save test results
@@ -996,6 +997,8 @@ class ACE:
         cumulative_fp = 0
         cumulative_fn = 0
         cumulative_tn = 0
+        cumulative_indeterminate = 0
+        cumulative_evaluated_total = 0
         total_count = 0
         all_test_errors = []
         window_test_results = []
@@ -1034,7 +1037,8 @@ class ACE:
                 self.max_tokens,
                 log_dir,
                 max_workers=test_workers,
-                use_json_mode=use_json_mode
+                use_json_mode=use_json_mode,
+                call_id_prefix=f"window_{window_idx + 1}_test_eval",
             )
             
             # Extract window results
@@ -1047,6 +1051,8 @@ class ACE:
                 cumulative_fp += w.get('fp', 0)
                 cumulative_fn += w.get('fn', 0)
                 cumulative_tn += w.get('tn', 0)
+                cumulative_indeterminate += w.get('indeterminate', 0)
+                cumulative_evaluated_total += w.get('evaluated_total', w.get('total', 0))
             
             # Add errors with window and global index information
             for error in window_test_error_log['errors']:
@@ -1065,6 +1071,8 @@ class ACE:
                     "window_precision": w.get('precision', 0.0),
                     "window_recall": w.get('recall', 0.0),
                     "window_f1": w.get('f1', 0.0),
+                    "window_evaluated_total": w.get('evaluated_total', w.get('total', 0)),
+                    "window_indeterminate": w.get('indeterminate', 0),
                     "window_total": window_total
                 })
                 
@@ -1206,11 +1214,16 @@ class ACE:
                 "precision": final_p, "recall": final_r, "f1": final_f1,
                 "tp": cumulative_tp, "fp": cumulative_fp,
                 "fn": cumulative_fn, "tn": cumulative_tn,
+                "evaluated_total": cumulative_evaluated_total,
+                "indeterminate": cumulative_indeterminate,
                 "total": total_count,
                 "window_results": window_test_results
             }
             test_error_log = {
                 "precision": final_p, "recall": final_r, "f1": final_f1,
+                "evaluated_total": cumulative_evaluated_total,
+                "indeterminate": cumulative_indeterminate,
+                "total": total_count,
                 "errors": all_test_errors
             }
             save_dict = {
@@ -1222,6 +1235,8 @@ class ACE:
                 "precision": final_p, "recall": final_r, "f1": final_f1,
                 "tp": cumulative_tp, "fp": cumulative_fp,
                 "fn": cumulative_fn, "tn": cumulative_tn,
+                "evaluated_total": cumulative_evaluated_total,
+                "indeterminate": cumulative_indeterminate,
                 "total": total_count,
             }
             summary = f"Final Test: P={final_p:.3f} R={final_r:.3f} F1={final_f1:.3f}"

@@ -17,11 +17,9 @@ Usage examples:
 import os
 import json
 import argparse
-from datetime import datetime
 from .data_processor import DataProcessor, load_data
 
 from ace import ACE
-from utils import initialize_clients
 
 
 def parse_args():
@@ -45,12 +43,17 @@ def parse_args():
 
     parser.add_argument("--api_provider", type=str, default="together",
                         choices=["sambanova", "together", "openai"])
+    parser.add_argument("--judge_api_provider", type=str, default=None,
+                        choices=["sambanova", "together", "openai"],
+                        help="Provider for LLM Judge (defaults to --api_provider)")
     parser.add_argument("--generator_model", type=str,
                         default="meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo")
     parser.add_argument("--reflector_model", type=str,
                         default="meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo")
     parser.add_argument("--curator_model", type=str,
                         default="meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo")
+    parser.add_argument("--judge_model", type=str, default=None,
+                        help="Model for LLM Judge (defaults to --generator_model)")
 
     parser.add_argument("--num_epochs", type=int, default=1)
     parser.add_argument("--max_num_rounds", type=int, default=3)
@@ -65,6 +68,11 @@ def parse_args():
 
     parser.add_argument("--json_mode", action="store_true")
     parser.add_argument("--no_ground_truth", action="store_true")
+    parser.add_argument("--strict_judge", dest="strict_judge", action="store_true",
+                        default=True,
+                        help="When Judge fails, mark abstention as indeterminate instead of keyword fallback")
+    parser.add_argument("--no_strict_judge", dest="strict_judge", action="store_false",
+                        help="Disable strict judge mode (fallback to keyword-based abstention detection)")
     parser.add_argument("--use_bulletpoint_analyzer", action="store_true")
     parser.add_argument("--bulletpoint_analyzer_threshold", type=float, default=0.90)
 
@@ -78,10 +86,18 @@ def parse_args():
     return parser.parse_args()
 
 
-def preprocess_data(task_name, config, mode, judge_client=None, judge_model=None):
+def preprocess_data(
+    task_name,
+    config,
+    mode,
+    judge_client=None,
+    judge_model=None,
+    strict_judge=True,
+):
     processor = DataProcessor(task_name=task_name,
                               judge_client=judge_client,
-                              judge_model=judge_model)
+                              judge_model=judge_model,
+                              strict_judge=strict_judge)
 
     if mode in ["online", "eval_only"]:
         train_samples = None
@@ -123,6 +139,8 @@ def load_initial_playbook(path):
 
 def main():
     args = parse_args()
+    judge_api_provider = args.judge_api_provider or args.api_provider
+    judge_model = args.judge_model or args.generator_model
 
     print(f"\n{'='*60}")
     print(f"ACE ABSTENTION EVALUATION")
@@ -131,6 +149,15 @@ def main():
     print(f"Mode: {args.mode.upper()}")
     print(f"Generator: {args.generator_model}")
     print(f"API Provider: {args.api_provider}")
+    if args.judge_api_provider is None:
+        print(f"Judge API Provider: {judge_api_provider} (defaulted from --api_provider)")
+    else:
+        print(f"Judge API Provider: {judge_api_provider}")
+    if args.judge_model is None:
+        print(f"Judge Model: {judge_model} (defaulted from --generator_model)")
+    else:
+        print(f"Judge Model: {judge_model}")
+    print(f"Strict Judge: {args.strict_judge}")
     print(f"{'='*60}\n")
 
     with open(args.config_path, "r") as f:
@@ -149,14 +176,15 @@ def main():
         "openai": os.getenv("OPENAI_API_KEY", ""),
     }
     judge_client = _openai.OpenAI(
-        api_key=provider_keys[args.api_provider],
-        base_url=provider_urls[args.api_provider],
+        api_key=provider_keys[judge_api_provider],
+        base_url=provider_urls[judge_api_provider],
     )
-    print(f"LLM Judge initialized: {args.generator_model} via {args.api_provider}")
+    print(f"LLM Judge initialized: {judge_model} via {judge_api_provider}")
 
     train_samples, val_samples, test_samples, data_processor = preprocess_data(
         args.task_name, task_config[args.task_name], args.mode,
-        judge_client=judge_client, judge_model=args.generator_model,
+        judge_client=judge_client, judge_model=judge_model,
+        strict_judge=args.strict_judge,
     )
 
     initial_playbook = load_initial_playbook(args.initial_playbook_path)
@@ -194,6 +222,9 @@ def main():
         "use_bulletpoint_analyzer": args.use_bulletpoint_analyzer,
         "bulletpoint_analyzer_threshold": args.bulletpoint_analyzer_threshold,
         "api_provider": args.api_provider,
+        "judge_api_provider": judge_api_provider,
+        "judge_model": judge_model,
+        "strict_judge": args.strict_judge,
     }
 
     results = ace_system.run(

@@ -157,10 +157,10 @@ def evaluate_single_test_sample(args_tuple, data_processor) -> Tuple[Dict, str]:
     Evaluate a single test sample - task-agnostic implementation.
     
     Args:
-        args_tuple: Tuple of (index, task_dict, generator, playbook, max_tokens, log_dir, use_json_mode)
+        args_tuple: Tuple of (index, task_dict, generator, playbook, max_tokens, log_dir, use_json_mode, call_id_prefix)
         data_processor: DataProcessor instance with answer_is_correct method
     """
-    (i, task_dict, generator, playbook, max_tokens, log_dir, use_json_mode) = args_tuple
+    (i, task_dict, generator, playbook, max_tokens, log_dir, use_json_mode, call_id_prefix) = args_tuple
     try:
         context = task_dict["context"]
         question = task_dict["question"]
@@ -172,7 +172,7 @@ def evaluate_single_test_sample(args_tuple, data_processor) -> Tuple[Dict, str]:
             context=context,
             reflection="(empty)",
             use_json_mode=use_json_mode,
-            call_id=f"test_eval_{i}",
+            call_id=f"{call_id_prefix}_{i}",
             log_dir=log_dir
         )
 
@@ -203,7 +203,7 @@ def evaluate_single_test_sample(args_tuple, data_processor) -> Tuple[Dict, str]:
 
 def evaluate_test_set(data_processor, generator, playbook, test_samples,
                       max_tokens=4096, log_dir=None, max_workers=20, 
-                      use_json_mode=False) -> Tuple[Dict, Dict]:
+                      use_json_mode=False, call_id_prefix="test_eval") -> Tuple[Dict, Dict]:
     """
     Parallel evaluation of test set returning AbstentionBench-style metrics.
 
@@ -215,7 +215,7 @@ def evaluate_test_set(data_processor, generator, playbook, test_samples,
     print(f"{'='*40}")
 
     args_list = [
-        (i, sample, generator, playbook, max_tokens, log_dir, use_json_mode)
+        (i, sample, generator, playbook, max_tokens, log_dir, use_json_mode, call_id_prefix)
         for i, sample in enumerate(test_samples)
     ]
 
@@ -278,13 +278,20 @@ def evaluate_test_set(data_processor, generator, playbook, test_samples,
             metrics = data_processor.evaluate_abstention_metrics(
                 results["should_abstain_list"],
                 results["is_abstention_list"])
+            evaluated_total = metrics.get("total", 0)
 
             final_results = {
                 **metrics,
+                "evaluated_total": evaluated_total,
                 "total": results["total"],
                 "no_answer": results["no_answer"]
             }
-            error_logs = {**metrics, "errors": results["errors"]}
+            error_logs = {
+                **metrics,
+                "evaluated_total": evaluated_total,
+                "total": results["total"],
+                "errors": results["errors"],
+            }
 
             print(f"\nPrecision: {metrics['precision']:.3f}  "
                   f"Recall: {metrics['recall']:.3f}  "
@@ -304,7 +311,7 @@ def evaluate_test_set(data_processor, generator, playbook, test_samples,
         if is_abstention_task:
             empty = {"precision": 0.0, "recall": 0.0, "f1": 0.0,
                      "tp": 0, "fp": 0, "fn": 0, "tn": 0,
-                     "total": 0, "no_answer": 0, "indeterminate": 0}
+                     "total": 0, "evaluated_total": 0, "no_answer": 0, "indeterminate": 0}
             final_results = empty
             error_logs = {**empty, "errors": []}
         else:

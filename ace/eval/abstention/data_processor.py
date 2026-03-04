@@ -2,7 +2,6 @@ import os
 import re
 import json
 import time
-import openai
 from typing import List, Dict, Any, Tuple, Optional
 
 
@@ -79,15 +78,24 @@ class DataProcessor:
     whether a model response constitutes an abstention.
     """
 
-    def __init__(self, task_name: str, judge_client=None, judge_model: str = None):
+    def __init__(
+        self,
+        task_name: str,
+        judge_client=None,
+        judge_model: str = None,
+        strict_judge: bool = True,
+    ):
         self.task_name = task_name
         self.base_task = task_name.replace("_online", "")
         self.judge_client = judge_client
         self.judge_model = judge_model
+        self.strict_judge = strict_judge
 
-    def init_judge(self, client, model_name: str):
+    def init_judge(self, client, model_name: str, strict_judge: Optional[bool] = None):
         self.judge_client = client
         self.judge_model = model_name
+        if strict_judge is not None:
+            self.strict_judge = strict_judge
 
     def process_task_data(self, raw_data: List[Dict]) -> List[Dict]:
         processed = []
@@ -201,27 +209,32 @@ class DataProcessor:
         if self.judge_client and full_response and task_dict:
             others = task_dict.get("others", {})
 
-            if predicted and predicted != "No final answer found":
-                judge_input = predicted
-            else:
-                judge_input = full_response
-
             is_abstention = self._call_judge(
                 question=task_dict.get("question", ""),
                 reference_answers=others.get("reference_answers"),
                 should_abstain=others.get("should_abstain", False),
-                model_answer=judge_input,
+                model_answer=full_response,
             )
 
-            if is_abstention is not None:
-                if ground_truth == "ABSTAIN":
-                    return is_abstention, is_abstention
-                else:
-                    if is_abstention:
-                        return False, is_abstention
-                    return self._check_answer_match(predicted, ground_truth), is_abstention
+            if is_abstention is None:
+                if self.strict_judge:
+                    if ground_truth == "ABSTAIN":
+                        return False, None
+                    return self._check_answer_match(predicted, ground_truth), None
+                return self._fallback_answer_is_correct(predicted, ground_truth)
 
-        # Fallback: no judge available or judge failed
+            if ground_truth == "ABSTAIN":
+                return is_abstention, is_abstention
+            if is_abstention:
+                return False, is_abstention
+            return self._check_answer_match(predicted, ground_truth), is_abstention
+
+        if self.judge_client and task_dict and self.strict_judge:
+            if ground_truth == "ABSTAIN":
+                return False, None
+            return self._check_answer_match(predicted, ground_truth), None
+
+        # Fallback: no judge available
         return self._fallback_answer_is_correct(predicted, ground_truth)
 
     def _fallback_answer_is_correct(self, predicted: str,
