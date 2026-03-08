@@ -29,9 +29,7 @@ def parse_args():
         "--task_name",
         type=str,
         required=True,
-        choices=["umwp", "selfaware", "falseqa", "coconot", "gpqa",
-                 "umwp_online", "selfaware_online", "falseqa_online", "coconot_online", "gpqa_online"],
-        help="Task name",
+        help="Task name. Must exist as a key in --config_path JSON.",
     )
     parser.add_argument("--initial_playbook_path", type=str, default=None)
     parser.add_argument(
@@ -162,6 +160,13 @@ def main():
 
     with open(args.config_path, "r") as f:
         task_config = json.load(f)
+
+    if args.task_name not in task_config:
+        available_tasks = ", ".join(sorted(task_config.keys()))
+        raise ValueError(
+            f"Unknown task_name '{args.task_name}'. "
+            f"Available tasks from {args.config_path}: {available_tasks}"
+        )
 
     # Initialize a dedicated judge client for LLM-based abstention detection
     import openai as _openai

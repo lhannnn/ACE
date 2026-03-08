@@ -1,0 +1,62 @@
+{
+  "alcuna_fast_online": {
+    "test_data": "./eval/abstention/data/aligned_fast20/ALCUNADataset.jsonl"
+  },
+  "bbq_fast_online": {
+    "test_data": "./eval/abstention/data/aligned_fast20/BBQDataset.jsonl"
+  },
+  "big_bench_disambiguate_fast_online": {
+    "test_data": "./eval/abstention/data/aligned_fast20/BigBenchDisambiguateDataset.jsonl"
+  },
+  "coconot_fast_online": {
+    "test_data": "./eval/abstention/data/aligned_fast20/CoCoNotDataset.jsonl"
+  },
+  "falseqa_fast_online": {
+    "test_data": "./eval/abstention/data/aligned_fast20/FalseQADataset.jsonl"
+  },
+  "freshqa_fast_online": {
+    "test_data": "./eval/abstention/data/aligned_fast20/FreshQADataset.jsonl"
+  },
+  "gsm8k_fast_online": {
+    "test_data": "./eval/abstention/data/aligned_fast20/GSM8K.jsonl"
+  },
+  "kuq_fast_online": {
+    "test_data": "./eval/abstention/data/aligned_fast20/KUQDataset.jsonl"
+  },
+  "mediq_fast_online": {
+    "test_data": "./eval/abstention/data/aligned_fast20/MediQDataset.jsonl"
+  },
+  "mmlu_math_fast_online": {
+    "test_data": "./eval/abstention/data/aligned_fast20/MMLUMath.jsonl"
+  },
+  "moralchoice_fast_online": {
+    "test_data": "./eval/abstention/data/aligned_fast20/MoralChoiceDataset.jsonl"
+  },
+  "musique_fast_online": {
+    "test_data": "./eval/abstention/data/aligned_fast20/MusiqueDataset.jsonl"
+  },
+  "nq_fast_online": {
+    "test_data": "./eval/abstention/data/aligned_fast20/NQDataset.jsonl"
+  },
+  "qaqa_fast_online": {
+    "test_data": "./eval/abstention/data/aligned_fast20/QAQADataset.jsonl"
+  },
+  "qasper_fast_online": {
+    "test_data": "./eval/abstention/data/aligned_fast20/QASPERDataset.jsonl"
+  },
+  "selfaware_fast_online": {
+    "test_data": "./eval/abstention/data/aligned_fast20/SelfAwareDataset.jsonl"
+  },
+  "situatedqa_geo_fast_online": {
+    "test_data": "./eval/abstention/data/aligned_fast20/SituatedQAGeoDataset.jsonl"
+  },
+  "squad2_fast_online": {
+    "test_data": "./eval/abstention/data/aligned_fast20/Squad2Dataset.jsonl"
+  },
+  "umwp_fast_online": {
+    "test_data": "./eval/abstention/data/aligned_fast20/UMWP.jsonl"
+  },
+  "worldsense_fast_online": {
+    "test_data": "./eval/abstention/data/aligned_fast20/WorldSenseDataset.jsonl"
+  }
+}

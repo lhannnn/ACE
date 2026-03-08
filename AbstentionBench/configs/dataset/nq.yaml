@@ -1,0 +1,9 @@
+# @package _global_
+
+dataset_name: NQDataset
+
+datamodule:
+  _target_: recipe.abstention_datasets.nq_dataset.NQDataset
+  data_dir: ${data_dir}/NQ
+  file_name: NQ/test.json
+  max_num_samples: null

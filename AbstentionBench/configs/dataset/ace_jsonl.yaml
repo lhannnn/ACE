@@ -1,0 +1,8 @@
+# @package _global_
+
+dataset_name: ACEJSONLDataset
+
+datamodule:
+  _target_: recipe.abstention_datasets.ace_jsonl.ACEJSONLDataset
+  data_path: null
+  max_num_samples: null

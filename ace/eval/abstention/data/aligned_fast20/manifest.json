@@ -1,0 +1,338 @@
+{
+  "generated_at": "2026-03-04T19:54:17",
+  "fast_indices_path": "/Users/luohan/Desktop/ACE/AbstentionBench/data/fast-subset-indices.json",
+  "output_dir": "/Users/luohan/Desktop/ACE/ace/eval/abstention/data/aligned_fast20",
+  "excluded_datasets": [
+    "AveritecDataset"
+  ],
+  "dataset_order": [
+    "ALCUNADataset",
+    "BBQDataset",
+    "BigBenchDisambiguateDataset",
+    "CoCoNotDataset",
+    "FalseQADataset",
+    "FreshQADataset",
+    "GSM8K",
+    "KUQDataset",
+    "MediQDataset",
+    "MoralChoiceDataset",
+    "MusiqueDataset",
+    "MMLUMath",
+    "NQDataset",
+    "QAQADataset",
+    "QASPERDataset",
+    "SelfAwareDataset",
+    "SituatedQAGeoDataset",
+    "Squad2Dataset",
+    "UMWP",
+    "WorldSenseDataset"
+  ],
+  "datasets": {
+    "ALCUNADataset": {
+      "ace_task_name": "alcuna_fast_online",
+      "source_config": "/Users/luohan/Desktop/ACE/AbstentionBench/configs/dataset/alcuna.yaml",
+      "output_file": "/Users/luohan/Desktop/ACE/ace/eval/abstention/data/aligned_fast20/ALCUNADataset.jsonl",
+      "record_count": 100,
+      "indices_count": 100,
+      "indices_sha256": "2eeccaff2afe2d1e9f53a0aef35ced5e469c95ef7858da2a1fe68159c748a805",
+      "question_sha256": "1ab6b0ec2657082823d6e4e7289a5c23a1f0fcc6058065891b8a4562b78ece36",
+      "file_sha256": "40ef0df31faa6e74158bec1af4271ff2e16c120b7f2f925b67a347ab7c7bc7e1",
+      "question_match_count": 100,
+      "question_mismatch_count": 0,
+      "scenario_counts": {
+        "underspecified_context": 100
+      }
+    },
+    "BBQDataset": {
+      "ace_task_name": "bbq_fast_online",
+      "source_config": "/Users/luohan/Desktop/ACE/AbstentionBench/configs/dataset/bbq.yaml",
+      "output_file": "/Users/luohan/Desktop/ACE/ace/eval/abstention/data/aligned_fast20/BBQDataset.jsonl",
+      "record_count": 100,
+      "indices_count": 100,
+      "indices_sha256": "a412ee45fbeb2c84c78dcb6dbe0cc009e326c3ae5d84e1382cc4679c64016149",
+      "question_sha256": "9c15e6031c00236e98d0f34ee61276950d661a39bae63bee2834c7d3a2f7be12",
+      "file_sha256": "be3926862db00df6b01c8696c09b109b3ed26a79cf38bc04bbd0b30f0240a30c",
+      "question_match_count": 100,
+      "question_mismatch_count": 0,
+      "scenario_counts": {
+        "underspecified_context": 100
+      }
+    },
+    "BigBenchDisambiguateDataset": {
+      "ace_task_name": "big_bench_disambiguate_fast_online",
+      "source_config": "/Users/luohan/Desktop/ACE/AbstentionBench/configs/dataset/big_bench_disambiguate.yaml",
+      "output_file": "/Users/luohan/Desktop/ACE/ace/eval/abstention/data/aligned_fast20/BigBenchDisambiguateDataset.jsonl",
+      "record_count": 100,
+      "indices_count": 100,
+      "indices_sha256": "d199fc580792dcdc8b9c3c42c34459ba375a75154afd2a3d8a748a397c82cb1a",
+      "question_sha256": "a132a8ae55f255f52057466d76af0dfcecb61ba23a7aed9d86471d9e8273741f",
+      "file_sha256": "46f737808707ef3662aee2aa7b425b6af79399aaf455269591c4baa085761d80",
+      "question_match_count": 100,
+      "question_mismatch_count": 0,
+      "scenario_counts": {
+        "underspecified_context": 100
+      }
+    },
+    "CoCoNotDataset": {
+      "ace_task_name": "coconot_fast_online",
+      "source_config": "/Users/luohan/Desktop/ACE/AbstentionBench/configs/dataset/coconot.yaml",
+      "output_file": "/Users/luohan/Desktop/ACE/ace/eval/abstention/data/aligned_fast20/CoCoNotDataset.jsonl",
+      "record_count": 100,
+      "indices_count": 100,
+      "indices_sha256": "0ba3061577d76e7da78e60811347830c9129f66f52cb1f8554b0ca3c4b8b39b7",
+      "question_sha256": "ad4e0b37e51d63ab9fdca662bb4d4fe32dcae16d7a10cfa3bd478a2aefcca3a0",
+      "file_sha256": "b306e498a82e132d91c26c062ce11765118c383e399dbeca5987b7309ef06a86",
+      "question_match_count": 100,
+      "question_mismatch_count": 0,
+      "scenario_counts": {
+        "underspecified_context": 7,
+        "unsupported_stale": 93
+      }
+    },
+    "FalseQADataset": {
+      "ace_task_name": "falseqa_fast_online",
+      "source_config": "/Users/luohan/Desktop/ACE/AbstentionBench/configs/dataset/falseqa.yaml",
+      "output_file": "/Users/luohan/Desktop/ACE/ace/eval/abstention/data/aligned_fast20/FalseQADataset.jsonl",
+      "record_count": 100,
+      "indices_count": 100,
+      "indices_sha256": "9728eb30e2c03941413833a2fe873fc232fe1e460186b0b7a41be7587d23e209",
+      "question_sha256": "453933999d6b238fda24d1c3e4b3a4d529590a029101622541e8ab1227835a38",
+      "file_sha256": "12fb0a43e1358f8fa1946cc96418d0941b69e74b9fd9915d7fa089c4d5e5cc12",
+      "question_match_count": 100,
+      "question_mismatch_count": 0,
+      "scenario_counts": {
+        "false_premise": 100
+      }
+    },
+    "FreshQADataset": {
+      "ace_task_name": "freshqa_fast_online",
+      "source_config": "/Users/luohan/Desktop/ACE/AbstentionBench/configs/dataset/freshqa.yaml",
+      "output_file": "/Users/luohan/Desktop/ACE/ace/eval/abstention/data/aligned_fast20/FreshQADataset.jsonl",
+      "record_count": 100,
+      "indices_count": 100,
+      "indices_sha256": "65e330cafc4df8d4dd8f86a3767bc21551ac23cb1cc315212198b5e12fce2d38",
+      "question_sha256": "f75e95a44f94d7e59a8ff5038308108bbe899e299efe570b06417d3cc722f59d",
+      "file_sha256": "0e8758f0ef102dae3f8becc660e6e29197ac9354aaae6afd2153fc71a145d018",
+      "question_match_count": 100,
+      "question_mismatch_count": 0,
+      "scenario_counts": {
+        "unsupported_stale": 100
+      }
+    },
+    "GSM8K": {
+      "ace_task_name": "gsm8k_fast_online",
+      "source_config": "/Users/luohan/Desktop/ACE/AbstentionBench/configs/dataset/gsm8k.yaml",
+      "output_file": "/Users/luohan/Desktop/ACE/ace/eval/abstention/data/aligned_fast20/GSM8K.jsonl",
+      "record_count": 100,
+      "indices_count": 100,
+      "indices_sha256": "32848b24f98ddc9ff23d63033376a631deb6fbe3b2d315e50e189d2e462d2374",
+      "question_sha256": "36632875fd2f1d50ba0d642cc6b4813e309df55bc6392db89afe9d87bb01ba91",
+      "file_sha256": "2c8bcad17daabd1d59ec39984b1578a8121941c25e61bec7af74206387affd75",
+      "question_match_count": 100,
+      "question_mismatch_count": 0,
+      "scenario_counts": {
+        "underspecified_context": 100
+      }
+    },
+    "KUQDataset": {
+      "ace_task_name": "kuq_fast_online",
+      "source_config": "/Users/luohan/Desktop/ACE/AbstentionBench/configs/dataset/kuq.yaml",
+      "output_file": "/Users/luohan/Desktop/ACE/ace/eval/abstention/data/aligned_fast20/KUQDataset.jsonl",
+      "record_count": 100,
+      "indices_count": 100,
+      "indices_sha256": "b5196b307cef5e1c6f1b31d484dc887c58ee06225ba9a7921b43538a0282633b",
+      "question_sha256": "7353b749203ad1820221e18fa94c5a717e4bec28ebd21e439be4b5885ca5b77b",
+      "file_sha256": "f5af4ef03dfa269162b97b151b9a64bb25abbddcacb0c80e939e5b465adb903c",
+      "question_match_count": 100,
+      "question_mismatch_count": 0,
+      "scenario_counts": {
+        "answer_unknown": 12,
+        "false_premise": 15,
+        "underspecified_context": 19,
+        "unsupported_stale": 54
+      }
+    },
+    "MediQDataset": {
+      "ace_task_name": "mediq_fast_online",
+      "source_config": "/Users/luohan/Desktop/ACE/AbstentionBench/configs/dataset/mediq.yaml",
+      "output_file": "/Users/luohan/Desktop/ACE/ace/eval/abstention/data/aligned_fast20/MediQDataset.jsonl",
+      "record_count": 100,
+      "indices_count": 100,
+      "indices_sha256": "c0e96fbe03ae53af9af8e5e85a70e9b594782f640ab9408f4d00d56ff5a39f70",
+      "question_sha256": "671cabad0452f4281cad9c82df5639269e24f6a9c774d18c1301e56e5c30b583",
+      "file_sha256": "29cd846cc44c782bb44c074af101a77b3da93fd6da28de750c03b39e6c4f5a63",
+      "question_match_count": 100,
+      "question_mismatch_count": 0,
+      "scenario_counts": {
+        "underspecified_context": 100
+      }
+    },
+    "MoralChoiceDataset": {
+      "ace_task_name": "moralchoice_fast_online",
+      "source_config": "/Users/luohan/Desktop/ACE/AbstentionBench/configs/dataset/moralchoice.yaml",
+      "output_file": "/Users/luohan/Desktop/ACE/ace/eval/abstention/data/aligned_fast20/MoralChoiceDataset.jsonl",
+      "record_count": 100,
+      "indices_count": 100,
+      "indices_sha256": "a39b8d94ba90b5e319d3554bc3158983711261635bbdc290ba34e3dee00be9a0",
+      "question_sha256": "226f4106bd6aae45889f7a646cc21a70cd452d4ad598c0162a0f5c1646511517",
+      "file_sha256": "3d7be4109ffafb85504ac0064634b1739e8c757669a76edd19edb0dcb99e5354",
+      "question_match_count": 100,
+      "question_mismatch_count": 0,
+      "scenario_counts": {
+        "unsupported_stale": 100
+      }
+    },
+    "MusiqueDataset": {
+      "ace_task_name": "musique_fast_online",
+      "source_config": "/Users/luohan/Desktop/ACE/AbstentionBench/configs/dataset/musique.yaml",
+      "output_file": "/Users/luohan/Desktop/ACE/ace/eval/abstention/data/aligned_fast20/MusiqueDataset.jsonl",
+      "record_count": 100,
+      "indices_count": 100,
+      "indices_sha256": "af284c4841a2e0affb2f94e8c6c8ed2a819ce318e9f8bc4ddcd15d779af9cb7d",
+      "question_sha256": "583f1f0ff5062ff53f63d5de0f9145a3e840e6e0c320e0c1ff57ad9982d62718",
+      "file_sha256": "2550665abd2d6e0cb8adc955dccbcd97090f54330651f068a040ff61e7ae1204",
+      "question_match_count": 100,
+      "question_mismatch_count": 0,
+      "scenario_counts": {
+        "underspecified_context": 100
+      }
+    },
+    "MMLUMath": {
+      "ace_task_name": "mmlu_math_fast_online",
+      "source_config": "/Users/luohan/Desktop/ACE/AbstentionBench/configs/dataset/mmlu_math.yaml",
+      "output_file": "/Users/luohan/Desktop/ACE/ace/eval/abstention/data/aligned_fast20/MMLUMath.jsonl",
+      "record_count": 100,
+      "indices_count": 100,
+      "indices_sha256": "718193f1dfdd6364d55131116b33da797ef1171d25baf5b173dd1a2f09ce8fc5",
+      "question_sha256": "c1db38649ae1d6db1fa7222ba339a84b2482c41aa4610832b266284c01e3dc37",
+      "file_sha256": "59ebc3559c9fb70da73dad0cec1519a307d6cbfcd73efe489ab00ead516d8118",
+      "question_match_count": 100,
+      "question_mismatch_count": 0,
+      "scenario_counts": {
+        "underspecified_context": 100
+      }
+    },
+    "NQDataset": {
+      "ace_task_name": "nq_fast_online",
+      "source_config": "/Users/luohan/Desktop/ACE/AbstentionBench/configs/dataset/nq.yaml",
+      "output_file": "/Users/luohan/Desktop/ACE/ace/eval/abstention/data/aligned_fast20/NQDataset.jsonl",
+      "record_count": 100,
+      "indices_count": 100,
+      "indices_sha256": "4b772deaa82a3f0377856b1ee5c08d60269ac2d0cd43980f2c71eb4c7d32e6d4",
+      "question_sha256": "5ea8c6f14f4955ad3d6ee75fa19585be2f9674eda01b7e23aff2b40aead32bbb",
+      "file_sha256": "39fa165a3a8121749c6cda5f2d4ad9c429cffec2ad181aa94f13421e78804784",
+      "question_match_count": 100,
+      "question_mismatch_count": 0,
+      "scenario_counts": {
+        "underspecified_context": 100
+      }
+    },
+    "QAQADataset": {
+      "ace_task_name": "qaqa_fast_online",
+      "source_config": "/Users/luohan/Desktop/ACE/AbstentionBench/configs/dataset/qaqa.yaml",
+      "output_file": "/Users/luohan/Desktop/ACE/ace/eval/abstention/data/aligned_fast20/QAQADataset.jsonl",
+      "record_count": 100,
+      "indices_count": 100,
+      "indices_sha256": "41c9dae00d37769fd7cd81b21b15800e689d23ce9f79f01ff86f6fd2bb312114",
+      "question_sha256": "60757400442c0d29a1c2494b07af9f6b1598e21a9339ede17bd94568dc9f6175",
+      "file_sha256": "12c7b7c137e38add711b9d5e27241b7d2acb864e1761f97a92432ef983a1dd6f",
+      "question_match_count": 100,
+      "question_mismatch_count": 0,
+      "scenario_counts": {
+        "false_premise": 100
+      }
+    },
+    "QASPERDataset": {
+      "ace_task_name": "qasper_fast_online",
+      "source_config": "/Users/luohan/Desktop/ACE/AbstentionBench/configs/dataset/qasper.yaml",
+      "output_file": "/Users/luohan/Desktop/ACE/ace/eval/abstention/data/aligned_fast20/QASPERDataset.jsonl",
+      "record_count": 100,
+      "indices_count": 100,
+      "indices_sha256": "0720b225e91fc0f5408ae3523e403e9c64f481b1a300003aa60430d233b21a35",
+      "question_sha256": "3cd74e8fd77df03797436c9379a5210a38b10d37b3e006b5261e00888610893d",
+      "file_sha256": "352ab88145120fe150e3409086164a5edd7625bb259ddbd01a7f5db7d6125f7a",
+      "question_match_count": 100,
+      "question_mismatch_count": 0,
+      "scenario_counts": {
+        "underspecified_context": 100
+      }
+    },
+    "SelfAwareDataset": {
+      "ace_task_name": "selfaware_fast_online",
+      "source_config": "/Users/luohan/Desktop/ACE/AbstentionBench/configs/dataset/self_aware.yaml",
+      "output_file": "/Users/luohan/Desktop/ACE/ace/eval/abstention/data/aligned_fast20/SelfAwareDataset.jsonl",
+      "record_count": 100,
+      "indices_count": 100,
+      "indices_sha256": "6c80461ebebef040f58dcb7e83e777f47c76a9079d8ce67249d9d947a6dec4ba",
+      "question_sha256": "0d8d8c6dda1baba4291a4b7a09b34732881a85d2afbd24b964ceb3525e73fa17",
+      "file_sha256": "bdf8572df552d8ed5fc7fc46fafc2c496df09516fbd95b8815026099b479a97c",
+      "question_match_count": 100,
+      "question_mismatch_count": 0,
+      "scenario_counts": {
+        "answer_unknown": 100
+      }
+    },
+    "SituatedQAGeoDataset": {
+      "ace_task_name": "situatedqa_geo_fast_online",
+      "source_config": "/Users/luohan/Desktop/ACE/AbstentionBench/configs/dataset/situated_qa.yaml",
+      "output_file": "/Users/luohan/Desktop/ACE/ace/eval/abstention/data/aligned_fast20/SituatedQAGeoDataset.jsonl",
+      "record_count": 100,
+      "indices_count": 100,
+      "indices_sha256": "40bc3b24a03850ce21cd3158808039bdaceb4b7737fee8f8b3f9ffac9b359880",
+      "question_sha256": "bb56f9958dafb50fa4f45113cbab94e74052d0e7d9c9963490b1a9097669d7eb",
+      "file_sha256": "0b7ba70f574f735280cfe0ffbaa4a8881c026e9b1326db5ba6897205c7000b4d",
+      "question_match_count": 100,
+      "question_mismatch_count": 0,
+      "scenario_counts": {
+        "underspecified_context": 100
+      }
+    },
+    "Squad2Dataset": {
+      "ace_task_name": "squad2_fast_online",
+      "source_config": "/Users/luohan/Desktop/ACE/AbstentionBench/configs/dataset/squad2.yaml",
+      "output_file": "/Users/luohan/Desktop/ACE/ace/eval/abstention/data/aligned_fast20/Squad2Dataset.jsonl",
+      "record_count": 100,
+      "indices_count": 100,
+      "indices_sha256": "c80d05d41e3aae541046a77f3ee59b84c1a988a9992405696dfc51e47feba97b",
+      "question_sha256": "4340328f8a17762c00d022d8e93c29d2299625cc959cc6af3112d3b9099bf1ba",
+      "file_sha256": "09769cbfd2c2911703aebcdb148767f123e15aa467983cb9869f1304b3d74de7",
+      "question_match_count": 100,
+      "question_mismatch_count": 0,
+      "scenario_counts": {
+        "underspecified_context": 100
+      }
+    },
+    "UMWP": {
+      "ace_task_name": "umwp_fast_online",
+      "source_config": "/Users/luohan/Desktop/ACE/AbstentionBench/configs/dataset/umwp.yaml",
+      "output_file": "/Users/luohan/Desktop/ACE/ace/eval/abstention/data/aligned_fast20/UMWP.jsonl",
+      "record_count": 100,
+      "indices_count": 100,
+      "indices_sha256": "191ced7d0a6c88eb3f7d9859c4b80fb526bdf43d87e81b3dd73c05b373ed5aba",
+      "question_sha256": "d1b11356fc6848b66a77800b734ecf62f189f5172f951c37e459b1ea6608f049",
+      "file_sha256": "e0079cac6204f300239497f5ceba8cd607a3830558a8a02eb420d3463ce673b2",
+      "question_match_count": 100,
+      "question_mismatch_count": 0,
+      "scenario_counts": {
+        "underspecified_context": 100
+      }
+    },
+    "WorldSenseDataset": {
+      "ace_task_name": "worldsense_fast_online",
+      "source_config": "/Users/luohan/Desktop/ACE/AbstentionBench/configs/dataset/worldsense.yaml",
+      "output_file": "/Users/luohan/Desktop/ACE/ace/eval/abstention/data/aligned_fast20/WorldSenseDataset.jsonl",
+      "record_count": 100,
+      "indices_count": 100,
+      "indices_sha256": "2789eddc0cb610b3550bd7b5ca631df5c3dfb74e86478b922b2d8d83f59783dd",
+      "question_sha256": "6946ad3704f78a21086faeca0117e5e1af8e1e5e04da3caefcc3c175d62fcc62",
+      "file_sha256": "c050c4e69f4b565a2b4b0eb719ce91a3d7e519393c59496c62bb22985f9194a3",
+      "question_match_count": 100,
+      "question_mismatch_count": 0,
+      "scenario_counts": {
+        "underspecified_context": 100
+      }
+    }
+  },
+  "dataset_count": 20,
+  "total_records": 2000
+}

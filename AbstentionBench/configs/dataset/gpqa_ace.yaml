@@ -1,0 +1,8 @@
+# @package _global_
+
+dataset_name: GPQA_ACE
+
+datamodule:
+  _target_: recipe.abstention_datasets.gpqa_ace.GPQAACE
+  data_path: /Users/luohan/Desktop/ACE/ace/eval/abstention/data/gpqa_all.jsonl
+  max_num_samples: null
